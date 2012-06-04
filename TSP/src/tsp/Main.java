@@ -88,7 +88,7 @@ class Func {
                     // sol1 = tabu_search(sol);
 
                     // Compare sol and sol1
-                    
+                     
                     if (false/*better sol*/) {
                         sol = sol1;
                     }
