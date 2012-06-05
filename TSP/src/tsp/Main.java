@@ -136,7 +136,7 @@ class Func {
                      
                      System.out.println();
 
-                     // Is neighbour_sol feasible  ??
+                     //  Is neighbour_sol feasible  ??
 
                      // Compare sol and neighbour_sol
                      
