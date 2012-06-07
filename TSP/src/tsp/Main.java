@@ -16,6 +16,8 @@ class Func {
         int numVeh;                         /* numVeh is the number of vehicles used in a particular iteration */
         float depot_x ;                     /* x and y coordinates of the depot   */
         float depot_y ;
+        float dist;
+        float dist1;
         float[] x = new float[4];
         float[] y = new float[4];
         float[] holding_x = new float[4];
@@ -27,8 +29,10 @@ class Func {
 
         public  Func() {
             //c = 1;
+            dist = 0;
+            dist1 = 0;
             n = 4;
-            m = 2;
+            m = 5;
             numVeh = 1;
             count = 0;
             countLimit = 100;
@@ -45,6 +49,11 @@ class Func {
             y[3] = 1;
             holding_x = x;
             holding_y = y;
+            deadlines[0] = 10;
+            deadlines[1] = 10;
+            deadlines[2] = 10;
+            deadlines[3] = 10;
+
             holding_list_index = new ArrayList<String>();
             for ( int i = 0; i<n; i++) {
                 holding_list_index.add(Integer.toString(i));
@@ -108,7 +117,61 @@ class Func {
             }
             return s;
         }
-        
+
+
+        /* This function checks if the input solution is
+         * feasible. Returns true if solution is possible
+         * else returns false.
+         */
+        boolean is_solution_feasible (ArrayList<ArrayList<String>> neighbour_sol) {
+                     int num_of_cars, location_id;
+                     int flag = 0;
+                     float curr_time;
+                     float present_x, time_for_local_travel;
+                     float present_y;
+                     num_of_cars  =  neighbour_sol.size();
+                     for (int i = 0; i< num_of_cars; i++ ) {
+                         curr_time = 0;
+                         present_x = depot_x;
+                         present_y = depot_y;
+                         for ( int j = 0; j<neighbour_sol.get(i).size() ; j++ )  {
+                             location_id = Integer.parseInt( neighbour_sol.get(i).get(j) );
+                             time_for_local_travel = distance_between_two_locations(present_x, present_y, x[location_id], y[location_id] )/speed;
+                             curr_time = curr_time + time_for_local_travel;
+                             if ( curr_time <= deadlines[location_id] )  {
+                                 present_x = x[location_id];
+                                 present_y = y[location_id];
+                                 continue;
+                             }
+                             else {
+                                 return false;
+                             }
+                         }
+                     }
+                     return true;
+        }
+//============================================================================================================================
+
+        boolean is_neighbour_better( ArrayList<ArrayList<String>> neighbour_sol ) {
+
+            int n1 = 0;
+            for ( int i = 0; i<neighbour_sol.size() ; i++) {
+                n1 = n1 + neighbour_sol.get(i).size();
+            }
+
+            int n = 0;
+            for ( int i = 0; i<sol.size() ; i++) {
+                n = n + sol.get(i).size();
+            }
+
+            if ( n1 > n  ) {
+                return true;
+            }
+            else {
+                //Check distances travelled
+            }
+            return true;
+        }
 
         void vrptw() {
 
@@ -137,10 +200,18 @@ class Func {
                      System.out.println();
 
                      //  Is neighbour_sol feasible  ??
+                     boolean possible = is_solution_feasible (neighbour_sol);
+
+
 
                      // Compare sol and neighbour_sol
+
                      
-                    if (false/*neighbour_sol is better than sol*/) {
+                     boolean is_better = is_neighbour_better( neighbour_sol );
+                     
+
+                     System.out.println();
+                    if (false/*neighbour_sol is better than sol*/  /*&&  neighbour_sol is feasible*/  ) {
                         //sol = sol_new;
                         sol = new ArrayList<ArrayList<String>>(neighbour_sol);
                         for (int i = 0; i<neighbour_sol.size();i++) {
@@ -162,6 +233,10 @@ public class Main {
         Func ob = new Func();
         /* Finding the nearest location to the depot for the initial solution.*/
         int index = ob.find_nearest_location_to_depot();
+
+        //////////////////////////////////    START  HERE      /////////////////////
+
+        ob.dist = 2*ob.distance_between_two_locations( ob.depot_x, ob.depot_y, ob.x[index], ob.y[index] );
         //System.out.println(index);
         /* Preparing initial solution */
         /*ArrayList<ArrayList<String>>*/ ob.sol = new ArrayList<ArrayList<String>>();
