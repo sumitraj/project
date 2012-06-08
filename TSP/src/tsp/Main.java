@@ -16,7 +16,7 @@ class Func {
         int numVeh;                         /* numVeh is the number of vehicles used in a particular iteration */
         float depot_x ;                     /* x and y coordinates of the depot   */
         float depot_y ;
-        float dist;
+        float dist;                       
         float dist1;
         float[] x = new float[4];
         float[] y = new float[4];
@@ -24,9 +24,8 @@ class Func {
         float[] holding_y = new float[4];
         float[] deadlines = new float[4];
         ArrayList<String> holding_list_index;
-        ArrayList<ArrayList<String>> sol;// = new ArrayList<ArrayList<String>>();
-        //int c;
-
+        ArrayList<ArrayList<String>> sol;
+     
         public  Func() {
             //c = 1;
             dist = 0;
@@ -61,18 +60,24 @@ class Func {
             
 
         }
+
+//=============================================================================================================================
+
+        /* Returns the Manhattan distance between two locations */
         float distance_between_two_locations( float x0, float y0, float x1, float y1 ) {
-            //System.out.println( Math.abs(x0 - x1));
-            //System.out.println( Math.abs(y0 - y1) );
             return  Math.abs(x0 - x1) + Math.abs(y0 - y1);
         }
+
+//=============================================================================================================================
+        /* Returns the index of the location
+         * nearest to the depot
+         */
         int find_nearest_location_to_depot() {
             float min = 99999;
             float dist;
             int min_index = 0;
             for (int i = 0; i<n; i++){
                 dist = distance_between_two_locations(depot_x, depot_y, x[i], y[i] );
-                //System.out.println(dist);
                 if (dist < min) {
                    min_index = i;
                    min = dist;
@@ -80,13 +85,33 @@ class Func {
             }
             return min_index;
         }
+		
+//====================================================================================================================================
+		
+		/* Returns the route length of the input parameter  */
+        float route_length (ArrayList<String> s) {
 
+            float len = 0;
+            len = len + distance_between_two_locations( depot_x, depot_y, x[Integer.parseInt(s.get(0))], y[Integer.parseInt(s.get(0))] );
+            for ( int i = 1; i<s.size(); i++ ) {
+                len = len + distance_between_two_locations( x[Integer.parseInt(s.get(i-1))], y[Integer.parseInt(s.get(i-1))], x[Integer.parseInt(s.get(i))], y[Integer.parseInt(s.get(i))] );
+            
+            }
+            len = len + distance_between_two_locations( depot_x, depot_y, x[Integer.parseInt(s.get(s.size()-1))], y[Integer.parseInt(s.get(s.size()-1))] );
+            return len;
+        }
+
+//===============================================================================================================================
+
+        /* Returns a neighbourhood solution
+         * of  the input solution
+         */
         ArrayList<ArrayList<String>> tabu_search( ArrayList<ArrayList<String>> s) {
 
             int k = 1;   //////   k = number of cases of neighbourhood search
             String swap_temp;
             ArrayList<ArrayList<String>> sol1 = new ArrayList<ArrayList<String>>();
-            sol1 = s;                 //////////////    ALWAYS  A   REFERENCE   ///////////////
+            sol1 = s;                
             int n, swap_list_index, size, n1, n2;
             Random generator = new Random();
             int c = generator.nextInt( k );
@@ -118,9 +143,10 @@ class Func {
             return s;
         }
 
+//=============================================================================================================================
 
         /* This function checks if the input solution is
-         * feasible. Returns true if solution is possible
+         * feasible(Deadlines met). Returns true if solution is possible
          * else returns false.
          */
         boolean is_solution_feasible (ArrayList<ArrayList<String>> neighbour_sol) {
@@ -130,6 +156,7 @@ class Func {
                      float present_x, time_for_local_travel;
                      float present_y;
                      num_of_cars  =  neighbour_sol.size();
+                     dist1 = 0;
                      for (int i = 0; i< num_of_cars; i++ ) {
                          curr_time = 0;
                          present_x = depot_x;
@@ -150,8 +177,13 @@ class Func {
                      }
                      return true;
         }
+
 //============================================================================================================================
 
+        /* Returns true if the neighbouring solution is better
+         * in terms of number of customers served and the distance
+         * travelled to serve the customers else returns false
+         */
         boolean is_neighbour_better( ArrayList<ArrayList<String>> neighbour_sol ) {
 
             int n1 = 0;
@@ -168,51 +200,51 @@ class Func {
                 return true;
             }
             else {
-                //Check distances travelled
+                //If number of customers served are equal, check distances travelled
+                if ( dist1 < dist ) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
             }
-            return true;
         }
 
-        void vrptw() {
+//==============================================================================================================================
 
-            //System.out.println(sol.get(0));
-            
-            
+
+        /* Implements the algorithm
+         * as in the research paper titled
+         * "Vehicle routing problem with time windows and a limited number of vehicles"
+         */
+        void vrptw() {
+  
+            /* Copy present solution to 'neighbour_sol' */
             ArrayList<ArrayList<String>> neighbour_sol = new ArrayList<ArrayList<String>>(sol);
             for (int i = 0; i<sol.size();i++) {
                 neighbour_sol.remove(i);
                 neighbour_sol.add(i, new ArrayList<String>(sol.get(i)) );
             }
-            //base_sol.add(sol.get(0));
-            //base_sol.get(0).remove(0);
 
+            
             while ( numVeh <= m && !(holding_list_index.isEmpty()) ) {
                 count = 0;
-                //System.out.println(sol.get(0).get(2));
                 ArrayList<ArrayList<String>> sol_new = new ArrayList<ArrayList<String>>();
 
                 while ( count < countLimit ) {
-
                      System.out.println();
-
                      sol_new = tabu_search( neighbour_sol );
-                     
                      System.out.println();
-
-                     //  Is neighbour_sol feasible  ??
+                     /*  Is neighbour_sol feasible ?  */
                      boolean possible = is_solution_feasible (neighbour_sol);
-
-
-
-                     // Compare sol and neighbour_sol
-
-                     
-                     boolean is_better = is_neighbour_better( neighbour_sol );
-                     
-
+                     dist1 = 0;
+                     for ( int i = 0; i < neighbour_sol.size(); i++ ) {
+                         dist1 = dist1 + route_length(neighbour_sol.get(i));
+                     }
+                     /*  Is neighbour_sol better   ?  */
+                     boolean better = is_neighbour_better( neighbour_sol );
                      System.out.println();
-                    if (false/*neighbour_sol is better than sol*/  /*&&  neighbour_sol is feasible*/  ) {
-                        //sol = sol_new;
+                    if ( possible  && better ) {
                         sol = new ArrayList<ArrayList<String>>(neighbour_sol);
                         for (int i = 0; i<neighbour_sol.size();i++) {
                             sol.remove(i);
@@ -226,33 +258,37 @@ class Func {
                 numVeh = numVeh + 1;
             }
         }
+
+//=================================================================================================================================
+
+        
+
+
 }
+
+
+//=====================================================================================================================================
+
+
 public class Main {        
     public static void main(String[] args) {
 
         Func ob = new Func();
         /* Finding the nearest location to the depot for the initial solution.*/
         int index = ob.find_nearest_location_to_depot();
-
-        //////////////////////////////////    START  HERE      /////////////////////
-
-        ob.dist = 2*ob.distance_between_two_locations( ob.depot_x, ob.depot_y, ob.x[index], ob.y[index] );
-        //System.out.println(index);
-        /* Preparing initial solution */
-        /*ArrayList<ArrayList<String>>*/ ob.sol = new ArrayList<ArrayList<String>>();
+        /* Preparing initial solution   */
+        ob.sol = new ArrayList<ArrayList<String>>();
         ArrayList<String> initial_sol = new ArrayList<String>();
         initial_sol.add(Integer.toString(index));
         initial_sol.add(Integer.toString(2));
         initial_sol.add(Integer.toString(3));
-        ob.holding_list_index.remove(index);
-        //initial_sol.add(4);
+        ob.dist = ob.route_length (initial_sol);
+        //ob.holding_list_index.remove(index);
+
+        /* Solution is a 'list of lists' where each list member represents the path taken by a vehicle.
+         * The number of list members in the solution represents the number of cars being used.
+         */
         ob.sol.add(initial_sol);
-
-        System.out.println( ob.sol.get(0).size() );
-
-
-        //System.out.println(sol.get( 0 ).remove(1));
-        //System.out.println(sol.get( 0 ));
         ob.vrptw(); /* vrptw :  Vehicle Routing Problem with Time Windows */
     }
 
