@@ -191,7 +191,7 @@ class Func {
                 n1 = n1 + neighbour_sol.get(i).size();
             }
 
-            int n = 0;
+             int n = 0;
             for ( int i = 0; i<sol.size() ; i++) {
                 n = n + sol.get(i).size();
             }
