@@ -3,6 +3,13 @@ package tsp;
 import java.io.*;
 import java.util.*;
 import java.lang.Math;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Node;
+import org.w3c.dom.Element;
+import java.io.File;
 /*
   @author sumit
 */
@@ -18,47 +25,34 @@ class Func {
         float depot_y ;
         float dist;                       
         float dist1;
-        float[] x = new float[4];
-        float[] y = new float[4];
-        float[] holding_x = new float[4];
-        float[] holding_y = new float[4];
-        float[] deadlines = new float[4];
+        float[] x; // = new float[4];
+        float[] y; // = new float[4];
+        float[] holding_x; // = new float[4];
+        float[] holding_y; // = new float[4];
+        float[] deadlines; // = new float[4];
         ArrayList<String> holding_list_index;
+        ArrayList<String> holding_list_index1;
         ArrayList<ArrayList<String>> sol;
      
         public  Func() {
-            //c = 1;
             dist = 0;
             dist1 = 0;
             n = 4;
-            m = 5;
+            m = 2;
             numVeh = 1;
             count = 0;
             countLimit = 100;
             speed = 2;
             depot_x = 1;
             depot_y = 1;
-            x[0] = 1;
-            y[0] = 5;
-            x[1] = 2;
-            y[1] = 3;
-            x[2] = 4;
-            y[2] = 2;
-            x[3] = 5;
-            y[3] = 1;
+            
             holding_x = x;
             holding_y = y;
-            deadlines[0] = 10;
-            deadlines[1] = 10;
-            deadlines[2] = 10;
-            deadlines[3] = 10;
 
             holding_list_index = new ArrayList<String>();
             for ( int i = 0; i<n; i++) {
                 holding_list_index.add(Integer.toString(i));
             }
-            
-
         }
 
 //=============================================================================================================================
@@ -90,7 +84,9 @@ class Func {
 		
 		/* Returns the route length of the input parameter  */
         float route_length (ArrayList<String> s) {
-
+            if (s.size() == 0 ) {
+                return 0;
+            }
             float len = 0;
             len = len + distance_between_two_locations( depot_x, depot_y, x[Integer.parseInt(s.get(0))], y[Integer.parseInt(s.get(0))] );
             for ( int i = 1; i<s.size(); i++ ) {
@@ -103,47 +99,6 @@ class Func {
 
 //===============================================================================================================================
 
-        /* Returns a neighbourhood solution
-         * of  the input solution
-         */
-        ArrayList<ArrayList<String>> tabu_search( ArrayList<ArrayList<String>> s) {
-
-            int k = 1;   //////   k = number of cases of neighbourhood search
-            String swap_temp;
-            ArrayList<ArrayList<String>> sol1 = new ArrayList<ArrayList<String>>();
-            sol1 = s;                
-            int n, swap_list_index, size, n1, n2;
-            Random generator = new Random();
-            int c = generator.nextInt( k );
-            switch (c) {
-                case 0:                // One Random Swap
-                  n = sol.size();
-                  
-
-                  swap_list_index = generator.nextInt(n);
-                  size = sol.get(swap_list_index).size();
-                  Random generator1 = new Random();
-                  n1 = generator1.nextInt(size);
-                  String value_n1 = sol1.get(swap_list_index).get(n1);
-                  Random generator2 = new Random();
-                  n2 = generator2.nextInt(size);
-                  String value_n2 = sol1.get(swap_list_index).get(n2);
-                  
-                  sol1.get(swap_list_index).remove(n1);
-                  sol1.get(swap_list_index).add(n1, value_n2 );
-
-                  sol1.get(swap_list_index).remove(n2);
-                  sol1.get(swap_list_index).add(n2, value_n1 );
-                  return sol1;
-                  
-                case 1:
-
-                    break;
-            }
-            return s;
-        }
-
-//=============================================================================================================================
 
         /* This function checks if the input solution is
          * feasible(Deadlines met). Returns true if solution is possible
@@ -211,6 +166,70 @@ class Func {
         }
 
 //==============================================================================================================================
+        /* Returns a neighbourhood solution
+         * of  the input solution
+         */
+        ArrayList<ArrayList<String>> tabu_search( ArrayList<ArrayList<String>> s) {
+
+            int k = 2;   //////   k = number of cases of neighbourhood search
+            String swap_temp;
+            int kk;
+            ArrayList<ArrayList<String>> sol1 = new ArrayList<ArrayList<String>>();
+            sol1 = s;                                  // This is the neighbour_sol
+            int n, swap_list_index, size, n1, n2;
+            Random generator = new Random();
+            int c = generator.nextInt( k );
+            switch (c) {
+                case 0:                // One Random Swap
+                  n = sol.size();
+                  swap_list_index = generator.nextInt(n);
+                  size = sol.get(swap_list_index).size();
+                  Random generator1 = new Random();
+                  n1 = generator1.nextInt(size);
+                  String value_n1 = sol1.get(swap_list_index).get(n1);
+                  Random generator2 = new Random();
+                  n2 = generator2.nextInt(size);
+                  String value_n2 = sol1.get(swap_list_index).get(n2);
+
+                  sol1.get(swap_list_index).remove(n1);
+                  sol1.get(swap_list_index).add(n1, value_n2 );
+
+                  sol1.get(swap_list_index).remove(n2);
+                  sol1.get(swap_list_index).add(n2, value_n1 );
+                  return sol1;
+
+                case 1:         /* Holding List to Solution */
+                    holding_list_index1 = new ArrayList<String>(holding_list_index)  ;
+                    Random generator3 = new Random();
+                    kk = generator3.nextInt(numVeh);
+                    ArrayList<String> te = new ArrayList<String>();
+                    if (kk >= sol.size() ) {
+                        te = new ArrayList<String>();
+                        te.add(  holding_list_index1.get(0)  );
+                        sol1.add(kk, te);
+                    }
+                    else {
+                        sol1.get(kk).add( generator3.nextInt(  sol.get(kk).size() )  ,  holding_list_index1.get(0)  );
+                    }
+                    holding_list_index1.remove(0);
+                    break;
+                case 2:        /* Shuffling within the Solution */
+                    int k1, k2, k_1, k_2;
+                    k1 = generator.nextInt(sol.size());
+                    k2 = generator.nextInt(sol.size());
+                    String temp;
+                    k_1 = generator.nextInt( sol1.get(k1).size() );
+                    k_2 = generator.nextInt( sol1.get(k2).size() );
+
+                    /* Swapping within the solution */
+                    temp = sol1.get(k1).get(k_1);
+                    sol1.get(k1).set(k_1,sol1.get(k2).get(k_2));
+                    sol1.get(k2).set(k_2,temp);
+            }
+            return s;
+        }
+
+//=============================================================================================================================
 
 
         /* Implements the algorithm
@@ -231,7 +250,13 @@ class Func {
                 count = 0;
                 ArrayList<ArrayList<String>> sol_new = new ArrayList<ArrayList<String>>();
 
-                while ( count < countLimit ) {
+                while ( count < countLimit  && !(holding_list_index.isEmpty())  ) {
+                    neighbour_sol = new ArrayList<ArrayList<String>>(sol);
+                    for (int i = 0; i<sol.size();i++) {
+                        neighbour_sol.remove(i);
+                        neighbour_sol.add(i, new ArrayList<String>(sol.get(i)) );
+                    }
+
                      System.out.println();
                      sol_new = tabu_search( neighbour_sol );
                      System.out.println();
@@ -244,14 +269,24 @@ class Func {
                      /*  Is neighbour_sol better   ?  */
                      boolean better = is_neighbour_better( neighbour_sol );
                      System.out.println();
-                    if ( possible  && better ) {
+                    if ( possible  &&  better ) {
                         sol = new ArrayList<ArrayList<String>>(neighbour_sol);
+                        int kn = sol.size();
+                        for (int i = 0; i< kn ;i++) {
+                            sol.remove(0);
+                        }
                         for (int i = 0; i<neighbour_sol.size();i++) {
-                            sol.remove(i);
                             sol.add(i, new ArrayList<String>(neighbour_sol.get(i)) );
                         }
+                        holding_list_index = holding_list_index1;
                     }
                     else {
+                         for( int i = 0; i<neighbour_sol.size(); i++) {
+                             neighbour_sol.remove(i);
+                         }
+                         for( int i = 0; i < sol.size(); i++) {
+                             neighbour_sol.add(sol.get(i));
+                         }
                         count = count + 1;
                     }
                 }
@@ -259,29 +294,92 @@ class Func {
             }
         }
 
+//==================================================================================================================================
+
+        /* Prints the solution approximated by the algorithm */
+        void print_solution() {
+
+            for ( int i = 0; i < sol.size(); i++ ) {
+                for (int j = 0; j < sol.get(i).size(); j++ ) {
+                    System.out.println(sol.get(i).get(j));
+                }
+                System.out.println("\n");
+            }
+        }
+    }
 //=================================================================================================================================
 
-        
 
+public class Main {
 
-}
+    private static String getTagValue(String sTag, Element eElement) {
+	NodeList nlList = eElement.getElementsByTagName(sTag).item(0).getChildNodes();
 
+        Node nValue = (Node) nlList.item(0);
 
-//=====================================================================================================================================
+	return nValue.getNodeValue();
+  }
 
+//=================================================================================================================================
 
-public class Main {        
     public static void main(String[] args) {
 
         Func ob = new Func();
-        /* Finding the nearest location to the depot for the initial solution.*/
+        int t;
+        int len = 100;
+        /* Reading XML  File  */
+        try {
+            File fXmlFile = new File("data.xml");
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+	    Document doc = dBuilder.parse(fXmlFile);
+            doc.getDocumentElement().normalize();
+
+            
+            NodeList nList = doc.getElementsByTagName("Point");
+            len = nList.getLength();
+            ob.x = new float[len];
+            ob.y = new float[len];
+            ob.holding_x = new float[len];
+            ob.holding_y = new float[len];
+            ob.deadlines = new float[len];
+
+            /* The locations and the deadlines are initialized here */
+            for (int temp = 0; temp < nList.getLength(); temp++) {
+
+		   Node nNode = nList.item(temp);
+		   if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+
+		      Element eElement = (Element) nNode;
+                      /*System.out.println("ID : " + getTagValue("id", eElement));
+		      System.out.println("X : " + getTagValue("x", eElement));
+		      System.out.println("Y : " + getTagValue("y", eElement));*/
+                      ob.x[ Integer.parseInt( getTagValue("id", eElement) ) ] = Integer.parseInt(getTagValue("x", eElement));
+                      ob.y[ Integer.parseInt( getTagValue("id", eElement) ) ] = Integer.parseInt(getTagValue("y", eElement));
+                      ob.deadlines[ Integer.parseInt( getTagValue("id", eElement) ) ] = Integer.parseInt(getTagValue("deadline", eElement));
+
+
+		   }
+            }
+            ob.holding_x = ob.x;
+            ob.holding_y = ob.y;
+
+        } catch (Exception e) {
+		e.printStackTrace();
+	}
+        
+
+        /* Finding  the nearest location to the depot for the initial solution.*/
         int index = ob.find_nearest_location_to_depot();
         /* Preparing initial solution   */
         ob.sol = new ArrayList<ArrayList<String>>();
         ArrayList<String> initial_sol = new ArrayList<String>();
-        initial_sol.add(Integer.toString(index));
-        initial_sol.add(Integer.toString(2));
         initial_sol.add(Integer.toString(3));
+        ob.holding_list_index.remove(Integer.toString(3));
+        initial_sol.add(Integer.toString(2));
+        ob.holding_list_index.remove(Integer.toString(2));
+        initial_sol.add(Integer.toString(1));
+        ob.holding_list_index.remove(Integer.toString(1));
         ob.dist = ob.route_length (initial_sol);
         //ob.holding_list_index.remove(index);
 
@@ -289,7 +387,10 @@ public class Main {
          * The number of list members in the solution represents the number of cars being used.
          */
         ob.sol.add(initial_sol);
+        
         ob.vrptw(); /* vrptw :  Vehicle Routing Problem with Time Windows */
+        ob.print_solution();
+        System.out.println();
     }
 
 }
