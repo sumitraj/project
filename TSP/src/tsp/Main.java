@@ -1,6 +1,7 @@
 
 package tsp;
 import java.io.*;
+import java.lang.*;
 import java.util.*;
 import java.lang.Math;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -23,32 +24,34 @@ class Func {
         int numVeh;                         /* numVeh is the number of vehicles used in a particular iteration */
         float depot_x ;                     /* x and y coordinates of the depot   */
         float depot_y ;
+        float service_time;
         float dist;                       
         float dist1;
-        float[] x; // = new float[4];
-        float[] y; // = new float[4];
-        float[] holding_x; // = new float[4];
-        float[] holding_y; // = new float[4];
-        float[] deadlines; // = new float[4];
+        float[] x; 
+        float[] y;
+        float[] holding_x;
+        float[] holding_y; 
+        float[] deadlines;
         ArrayList<String> holding_list_index;
         ArrayList<String> holding_list_index1;
         ArrayList<ArrayList<String>> sol;
      
         public  Func() {
-            dist = 0;
-            dist1 = 0;
-            n = 4;
-            m = 2;
-            numVeh = 1;
-            count = 0;
-            countLimit = 100;
+            
+            n = 9;
+            m = 4;
+            countLimit = 1000;
             speed = 2;
+            service_time = 1;
+
             depot_x = 1;
             depot_y = 1;
-            
+            numVeh = 1;
+            count = 0;
+            dist = 0;
+            dist1 = 0;
             holding_x = x;
             holding_y = y;
-
             holding_list_index = new ArrayList<String>();
             for ( int i = 0; i<n; i++) {
                 holding_list_index.add(Integer.toString(i));
@@ -123,11 +126,13 @@ class Func {
                              if ( curr_time <= deadlines[location_id] )  {
                                  present_x = x[location_id];
                                  present_y = y[location_id];
+                                 curr_time = curr_time + service_time ;
                                  continue;
                              }
                              else {
                                  return false;
                              }
+
                          }
                      }
                      return true;
@@ -171,11 +176,11 @@ class Func {
          */
         ArrayList<ArrayList<String>> tabu_search( ArrayList<ArrayList<String>> s) {
 
-            int k = 2;   //////   k = number of cases of neighbourhood search
+            int k = 3;   //   k = number of cases of neighbourhood search
             String swap_temp;
             int kk;
             ArrayList<ArrayList<String>> sol1 = new ArrayList<ArrayList<String>>();
-            sol1 = s;                                  // This is the neighbour_sol
+            sol1 = s;                                
             int n, swap_list_index, size, n1, n2;
             Random generator = new Random();
             int c = generator.nextInt( k );
@@ -198,21 +203,25 @@ class Func {
                   sol1.get(swap_list_index).add(n2, value_n1 );
                   return sol1;
 
+
                 case 1:         /* Holding List to Solution */
                     holding_list_index1 = new ArrayList<String>(holding_list_index)  ;
                     Random generator3 = new Random();
+                    int mm = generator3.nextInt( holding_list_index1.size() );
                     kk = generator3.nextInt(numVeh);
                     ArrayList<String> te = new ArrayList<String>();
                     if (kk >= sol.size() ) {
                         te = new ArrayList<String>();
-                        te.add(  holding_list_index1.get(0)  );
+                        te.add(  holding_list_index1.get(mm)  );
                         sol1.add(kk, te);
                     }
                     else {
-                        sol1.get(kk).add( generator3.nextInt(  sol.get(kk).size() )  ,  holding_list_index1.get(0)  );
+                        sol1.get(kk).add( generator3.nextInt(  sol.get(kk).size() )  ,  holding_list_index1.get(mm)  );
                     }
-                    holding_list_index1.remove(0);
+                    holding_list_index1.remove(mm);
                     break;
+
+                    
                 case 2:        /* Shuffling within the Solution */
                     int k1, k2, k_1, k_2;
                     k1 = generator.nextInt(sol.size());
@@ -345,18 +354,15 @@ public class Main {
             ob.deadlines = new float[len];
 
             /* The locations and the deadlines are initialized here */
-            for (int temp = 0; temp < nList.getLength(); temp++) {
+            for (int temp = 0; temp < len; temp++) {
 
 		   Node nNode = nList.item(temp);
 		   if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 
 		      Element eElement = (Element) nNode;
-                      /*System.out.println("ID : " + getTagValue("id", eElement));
-		      System.out.println("X : " + getTagValue("x", eElement));
-		      System.out.println("Y : " + getTagValue("y", eElement));*/
                       ob.x[ Integer.parseInt( getTagValue("id", eElement) ) ] = Integer.parseInt(getTagValue("x", eElement));
                       ob.y[ Integer.parseInt( getTagValue("id", eElement) ) ] = Integer.parseInt(getTagValue("y", eElement));
-                      ob.deadlines[ Integer.parseInt( getTagValue("id", eElement) ) ] = Integer.parseInt(getTagValue("deadline", eElement));
+                      ob.deadlines[ Integer.parseInt( getTagValue("id", eElement) ) ] = Float.valueOf( getTagValue("deadline", eElement) );//Integer.parseInt(getTagValue("deadline", eElement));
 
 
 		   }
@@ -374,15 +380,16 @@ public class Main {
         /* Preparing initial solution   */
         ob.sol = new ArrayList<ArrayList<String>>();
         ArrayList<String> initial_sol = new ArrayList<String>();
-        initial_sol.add(Integer.toString(3));
-        ob.holding_list_index.remove(Integer.toString(3));
-        initial_sol.add(Integer.toString(2));
-        ob.holding_list_index.remove(Integer.toString(2));
+        initial_sol.add(Integer.toString(0));
+        ob.holding_list_index.remove(Integer.toString(0));
         initial_sol.add(Integer.toString(1));
         ob.holding_list_index.remove(Integer.toString(1));
+        initial_sol.add(Integer.toString(4));
+        ob.holding_list_index.remove(Integer.toString(4));
+        initial_sol.add(Integer.toString(3));
+        ob.holding_list_index.remove(Integer.toString(3));
         ob.dist = ob.route_length (initial_sol);
-        //ob.holding_list_index.remove(index);
-
+        
         /* Solution is a 'list of lists' where each list member represents the path taken by a vehicle.
          * The number of list members in the solution represents the number of cars being used.
          */
@@ -392,5 +399,4 @@ public class Main {
         ob.print_solution();
         System.out.println();
     }
-
 }
