@@ -40,9 +40,9 @@ class Func {
             
             n = 9;
             m = 4;
-            countLimit = 1000;
             speed = 2;
             service_time = 1;
+            countLimit = 1000;
 
             depot_x = 1;
             depot_y = 1;
@@ -151,12 +151,12 @@ class Func {
                 n1 = n1 + neighbour_sol.get(i).size();
             }
 
-             int n = 0;
+            int n2 = 0;
             for ( int i = 0; i<sol.size() ; i++) {
-                n = n + sol.get(i).size();
+                n2 = n2 + sol.get(i).size();
             }
 
-            if ( n1 > n  ) {
+            if ( n1 > n2  ) {
                 return true;
             }
             else {
@@ -181,13 +181,13 @@ class Func {
             int kk;
             ArrayList<ArrayList<String>> sol1 = new ArrayList<ArrayList<String>>();
             sol1 = s;                                
-            int n, swap_list_index, size, n1, n2;
+            int nn, swap_list_index, size, n1, n2;
             Random generator = new Random();
             int c = generator.nextInt( k );
             switch (c) {
                 case 0:                // One Random Swap
-                  n = sol.size();
-                  swap_list_index = generator.nextInt(n);
+                  nn = sol.size();
+                  swap_list_index = generator.nextInt(nn);
                   size = sol.get(swap_list_index).size();
                   Random generator1 = new Random();
                   n1 = generator1.nextInt(size);
@@ -290,12 +290,12 @@ class Func {
                         holding_list_index = holding_list_index1;
                     }
                     else {
-                         for( int i = 0; i<neighbour_sol.size(); i++) {
+                        for( int i = 0; i<neighbour_sol.size(); i++) {
                              neighbour_sol.remove(i);
-                         }
-                         for( int i = 0; i < sol.size(); i++) {
-                             neighbour_sol.add(sol.get(i));
-                         }
+                        }
+                        for( int i = 0; i < sol.size(); i++) {
+                            neighbour_sol.add(sol.get(i));
+                        }
                         count = count + 1;
                     }
                 }
@@ -315,6 +315,53 @@ class Func {
                 System.out.println("\n");
             }
         }
+
+//=====================================================================================================================================
+
+        int find_id_of_nearest_location ( float t_x, float t_y, ArrayList<String> al  ) {
+            float min = 999999;
+            float t;
+            int index = 0;
+            for ( int i = 0; i<al.size(); i++  ) {
+                t = distance_between_two_locations (t_x, t_y, x[Integer.parseInt(al.get(i))] , y[Integer.parseInt(al.get(i))]  );
+                if (t < min) {
+                    min = t;
+                    index = i;
+                }
+            }
+            return  Integer.parseInt(al.get(index));
+        }
+
+//======================================================================================================================================
+
+        ArrayList<String> find_initial_sol(ArrayList<String> initial_sol){
+            ArrayList<String> temp = new ArrayList<String>( holding_list_index );
+            ArrayList<String> init = initial_sol;
+            int t = holding_list_index.size();
+            int id;
+            float t_x, t_y, curr_x, curr_y, d;
+            float time = - service_time;
+            t_x = depot_x;
+            t_y = depot_y;
+            curr_x = depot_x;
+            curr_y = depot_y;
+            while ( !temp.isEmpty()  ) {
+                System.out.println(":::::");
+                id = find_id_of_nearest_location(curr_x, curr_y, temp);
+                //temp.remove(temp.get(in));
+                time = time + service_time + distance_between_two_locations (curr_x, curr_y, x[id], y[id] )/speed ;
+                if (time <= deadlines[id]) {
+                    init.add(Integer.toString(id));
+                    
+                    curr_x = x[id];
+                    curr_y = y[id];
+                    holding_list_index.remove(Integer.toString(id));
+                }
+                temp.remove(Integer.toString(id));
+            }
+            return init;
+        }
+
     }
 //=================================================================================================================================
 
@@ -347,11 +394,14 @@ public class Main {
             
             NodeList nList = doc.getElementsByTagName("Point");
             len = nList.getLength();
+            
+            ob.n = len;
             ob.x = new float[len];
             ob.y = new float[len];
             ob.holding_x = new float[len];
             ob.holding_y = new float[len];
             ob.deadlines = new float[len];
+            
 
             /* The locations and the deadlines are initialized here */
             for (int temp = 0; temp < len; temp++) {
@@ -374,20 +424,13 @@ public class Main {
 		e.printStackTrace();
 	}
         
-
+        
         /* Finding  the nearest location to the depot for the initial solution.*/
         int index = ob.find_nearest_location_to_depot();
         /* Preparing initial solution   */
         ob.sol = new ArrayList<ArrayList<String>>();
         ArrayList<String> initial_sol = new ArrayList<String>();
-        initial_sol.add(Integer.toString(0));
-        ob.holding_list_index.remove(Integer.toString(0));
-        initial_sol.add(Integer.toString(1));
-        ob.holding_list_index.remove(Integer.toString(1));
-        initial_sol.add(Integer.toString(4));
-        ob.holding_list_index.remove(Integer.toString(4));
-        initial_sol.add(Integer.toString(3));
-        ob.holding_list_index.remove(Integer.toString(3));
+        initial_sol = ob.find_initial_sol(initial_sol);
         ob.dist = ob.route_length (initial_sol);
         
         /* Solution is a 'list of lists' where each list member represents the path taken by a vehicle.
@@ -397,6 +440,6 @@ public class Main {
         
         ob.vrptw(); /* vrptw :  Vehicle Routing Problem with Time Windows */
         ob.print_solution();
-        System.out.println();
+        
     }
 }
