@@ -348,7 +348,6 @@ class Func {
             while ( !temp.isEmpty()  ) {
                 System.out.println(":::::");
                 id = find_id_of_nearest_location(curr_x, curr_y, temp);
-                //temp.remove(temp.get(in));
                 time = time + service_time + distance_between_two_locations (curr_x, curr_y, x[id], y[id] )/speed ;
                 if (time <= deadlines[id]) {
                     init.add(Integer.toString(id));
